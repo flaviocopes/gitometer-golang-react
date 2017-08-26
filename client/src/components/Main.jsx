@@ -34,6 +34,12 @@ class Main extends Component {
     })
   }
 
+  addNewRepository = (owner, name) => {
+    axios.post(`http://localhost:8000/api/repo/${owner}/${name}`).then((resp) => {
+      console.log(resp)
+    })
+  }
+
   render() {
     return (
       <main>
@@ -44,6 +50,7 @@ class Main extends Component {
             render={() =>
               (<RepositoriesList
                 getRepositoriesData={this.getRepositoriesData}
+                addNewRepository={this.addNewRepository}
                 data={this.state.repositoriesData}
               />)}
           />

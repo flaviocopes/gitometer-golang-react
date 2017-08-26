@@ -2,6 +2,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import RepositorySummary from './RepositorySummary'
+import AddNew from './AddNew'
 
 const h1 = {
   textAlign: 'center',
@@ -45,8 +46,16 @@ class RepositoriesList extends Component {
         <div className="padded-lg">
           <div className="projects-list">
             {this.props.data.map(r =>
-              <RepositorySummary key={r.name} name={r.name} owner={r.ownerName} totalStars={r.totalStars} id={r.id} />,
+              (<RepositorySummary
+                key={r.name}
+                name={r.name}
+                owner={r.ownerName}
+                totalStars={r.totalStars}
+                id={r.id}
+              />),
             )}
+            <br />
+            <AddNew addNewRepository={this.props.addNewRepository} />
           </div>
         </div>
       </div>
@@ -55,6 +64,7 @@ class RepositoriesList extends Component {
 }
 
 RepositoriesList.propTypes = {
+  addNewRepository: PropTypes.func.isRequired,
   getRepositoriesData: PropTypes.func.isRequired,
   data: PropTypes.arrayOf(
     PropTypes.shape({
