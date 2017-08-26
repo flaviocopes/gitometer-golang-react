@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 
 const RepositorySummary = props =>
   (<div className="project-box">
-    <Link to={`/repositories/${props.name}`}>
+    <Link to={`/repositories/${props.owner}/${props.name}`}>
       <div className="project-head">
         <div className="project-title">
           <h5 className="home-entry-stars">
@@ -30,6 +30,7 @@ RepositorySummary.propTypes = {
   // id: PropTypes.number.isRequired,
   totalStars: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
+  owner: PropTypes.string.isRequired,
 }
 
 export default RepositorySummary

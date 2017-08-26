@@ -12,7 +12,7 @@ const h1 = {
   fontSize: '60px',
 }
 
-class Home extends Component {
+class RepositoriesList extends Component {
   componentDidMount() {
     if (!this.props.data) {
       this.props.getRepositoriesData()
@@ -45,7 +45,7 @@ class Home extends Component {
         <div className="padded-lg">
           <div className="projects-list">
             {this.props.data.map(r =>
-              <RepositorySummary key={r.name} name={r.name} totalStars={r.totalStars} id={r.id} />,
+              <RepositorySummary key={r.name} name={r.name} owner={r.ownerName} totalStars={r.totalStars} id={r.id} />,
             )}
           </div>
         </div>
@@ -54,7 +54,7 @@ class Home extends Component {
   }
 }
 
-Home.propTypes = {
+RepositoriesList.propTypes = {
   getRepositoriesData: PropTypes.func.isRequired,
   data: PropTypes.arrayOf(
     PropTypes.shape({
@@ -65,8 +65,8 @@ Home.propTypes = {
   ),
 }
 
-Home.defaultProps = {
+RepositoriesList.defaultProps = {
   data: null,
 }
 
-export default Home
+export default RepositoriesList

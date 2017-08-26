@@ -3,20 +3,34 @@ import React, { Component } from 'react'
 import { Switch, Route } from 'react-router-dom'
 import axios from 'axios'
 
-import Home from './Home'
 import SingleRepository from './SingleRepository/Main'
-import Schedule from './Schedule'
+import RepositoriesList from './RepositoriesList/Main'
+import Settings from './Settings'
 
 class Main extends Component {
   constructor(props) {
     super(props)
-    this.state = { data: null }
+    this.state = { repositoriesData: null, repositoryData: null }
   }
 
   getRepositoriesData = () => {
     axios.get('http://localhost:8000/api/index').then((resp) => {
-      this.setState({ data: resp.data.repositories })
+      this.setState({ repositoriesData: resp.data.repositories })
       this.forceUpdate()
+    })
+  }
+
+  getRepositoryData = (owner, name) => {
+    axios.get(`http://localhost:8000/api/repo/${owner}/${name}`).then((resp) => {
+      let newRepositoryData = Object.assign({}, this.state.repositoryData)
+      if (!newRepositoryData) {
+        newRepositoryData = {}
+      }
+      if (!newRepositoryData[owner]) {
+        newRepositoryData[owner] = {}
+      }
+      newRepositoryData[owner][name] = resp.data
+      this.setState({ repositoryData: newRepositoryData })
     })
   }
 
@@ -28,11 +42,30 @@ class Main extends Component {
             exact
             path="/"
             render={() =>
-              <Home getRepositoriesData={this.getRepositoriesData} data={this.state.data} />}
+              (<RepositoriesList
+                getRepositoriesData={this.getRepositoriesData}
+                data={this.state.repositoriesData}
+              />)}
           />
           <Route
-            path="/repositories/:name"
-            render={() => <SingleRepository data={this.state.data} updateData={this.updateData} />}
+            path="/repositories/:owner/:name"
+            render={(props) => {
+              let data = null
+              if (
+                this.state.repositoryData &&
+                this.state.repositoryData[props.match.params.owner] &&
+                this.state.repositoryData[props.match.params.owner][props.match.params.name]
+              ) {
+                data = this.state.repositoryData[props.match.params.owner][props.match.params.name]
+              }
+              return (
+                <SingleRepository
+                  match={props.match}
+                  data={data}
+                  getRepositoryData={this.getRepositoryData}
+                />
+              )
+            }}
           />
           <Route path="/settings" component={Settings} />
         </Switch>

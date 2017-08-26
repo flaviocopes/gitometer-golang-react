@@ -1,16 +1,22 @@
 // eslint-disable-next-line
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-// import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Heading from './Heading'
 import SummaryNumbers from './SummaryNumbers'
 import CommitsOverTime from './CommitsOverTime'
 import StarsOverTime from './StarsOverTime'
 
 class SingleRepository extends Component {
+  constructor(props) {
+    super(props)
+    this.owner = props.match.params.owner
+    this.name = props.match.params.name
+  }
+
   componentDidMount() {
     if (!this.props.data) {
-      this.props.updateData()
+      this.props.getRepositoryData(this.owner, this.name)
     }
   }
 
@@ -18,7 +24,11 @@ class SingleRepository extends Component {
     const data = this.props.data
 
     if (!data) {
-      return <div>Sorry, but the repo was not found</div>
+      return (
+        <div>
+          <Link to="/">Home</Link> Sorry, but the repo was not found
+        </div>
+      )
     }
 
     const url = 'https://github.com/{data.repository.owner}/{data.repository.name}'
@@ -29,6 +39,7 @@ class SingleRepository extends Component {
       <div>
         <div className="element-wrapper wrapper-dashboard">
           <div className="user-profile">
+            <Link to="/">Home</Link>
             <Heading
               name={data.repository.name}
               description={data.repository.description}
@@ -66,7 +77,7 @@ class SingleRepository extends Component {
 }
 
 SingleRepository.propTypes = {
-  updateData: PropTypes.func.isRequired,
+  getRepositoryData: PropTypes.func.isRequired,
   data: PropTypes.shape({
     repository: PropTypes.shape({
       name: PropTypes.string,
