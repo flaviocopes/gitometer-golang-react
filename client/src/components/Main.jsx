@@ -1,21 +1,44 @@
-import React from 'react'
+// eslint-disable-next-line
+import React, { Component } from 'react'
 import { Switch, Route } from 'react-router-dom'
+import axios from 'axios'
+
 import Home from './Home'
-import Repositories from './Repositories'
+import SingleRepository from './SingleRepository/Main'
 import Schedule from './Schedule'
 
-// The Main component renders one of the three provided
-// Routes (provided that one matches). Both the /roster
-// and /schedule routes will match any pathname that starts
-// with /roster or /schedule. The / route will only match
-// when the pathname is exactly the string "/"
-const Main = () =>
-  (<main>
-    <Switch>
-      <Route exact path="/" component={Home} />
-      <Route path="/repositories" component={Repositories} />
-      <Route path="/schedule" component={Schedule} />
-    </Switch>
-  </main>)
+class Main extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { data: null }
+  }
+
+  getRepositoriesData = () => {
+    axios.get('http://localhost:8000/api/index').then((resp) => {
+      this.setState({ data: resp.data.repositories })
+      this.forceUpdate()
+    })
+  }
+
+  render() {
+    return (
+      <main>
+        <Switch>
+          <Route
+            exact
+            path="/"
+            render={() =>
+              <Home getRepositoriesData={this.getRepositoriesData} data={this.state.data} />}
+          />
+          <Route
+            path="/repositories/:name"
+            render={() => <SingleRepository data={this.state.data} updateData={this.updateData} />}
+          />
+          <Route path="/settings" component={Settings} />
+        </Switch>
+      </main>
+    )
+  }
+}
 
 export default Main

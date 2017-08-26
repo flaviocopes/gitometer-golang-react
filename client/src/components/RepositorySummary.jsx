@@ -10,7 +10,7 @@ const RepositorySummary = props =>
       <div className="project-head">
         <div className="project-title">
           <h5 className="home-entry-stars">
-            {props.stars}{' '}
+            {props.totalStars}{' '}
             <img
               className="emojione"
               alt="&#x1f31f;"
@@ -27,8 +27,8 @@ const RepositorySummary = props =>
   </div>)
 
 RepositorySummary.propTypes = {
-  id: PropTypes.number.isRequired,
-  stars: PropTypes.number.isRequired,
+  // id: PropTypes.number.isRequired,
+  totalStars: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
 }
 

@@ -11,7 +11,6 @@ const Graph = (props) => {
         label: props.label,
         fill: true,
         lineTension: 0.4,
-        // backgroundColor: liteLineGradient,
         borderColor: '#8f1cad',
         borderCapStyle: 'butt',
         borderDash: [],
@@ -37,12 +36,8 @@ const Graph = (props) => {
 
 Graph.propTypes = {
   label: PropTypes.string.isRequired,
-  labels: PropTypes.shape({
-    string: PropTypes.string,
-  }).isRequired,
-  data: PropTypes.shape({
-    string: PropTypes.int,
-  }).isRequired,
+  labels: PropTypes.arrayOf(PropTypes.string).isRequired,
+  data: PropTypes.arrayOf(PropTypes.number).isRequired,
 }
 
 export default Graph

@@ -3,7 +3,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const ValueAndPercentage = (props) => {
-  const percentage = parseInt(props.partial / props.total * 100, 10)
+  const percentage = parseInt((props.partial / props.total) * 100, 10)
 
   if (props.partial === null) {
     return (

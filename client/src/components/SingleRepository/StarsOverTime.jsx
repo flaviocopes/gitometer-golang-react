@@ -52,12 +52,8 @@ StarsOverTime.propTypes = {
   count_last_4_weeks: PropTypes.number.isRequired,
   count_last_week: PropTypes.number.isRequired,
   graph_label: PropTypes.string.isRequired,
-  graph_labels: PropTypes.shape({
-    string: PropTypes.string,
-  }).isRequired,
-  graph_data: PropTypes.shape({
-    string: PropTypes.int,
-  }).isRequired,
+  graph_labels: PropTypes.arrayOf(PropTypes.string).isRequired,
+  graph_data: PropTypes.arrayOf(PropTypes.number).isRequired,
 }
 
 export default StarsOverTime
