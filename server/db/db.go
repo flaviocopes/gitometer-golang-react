@@ -1,66 +1,134 @@
-package main
+package db
 
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
-	"strings"
+	"os"
 
+	"github.com/google/go-github/github"
+	// Postgres drivers
 	_ "github.com/lib/pq"
+
+	"github.com/flaviocopes/gitometer/server/common"
 )
 
-// parseParams accepts a req and returns the `num` path tokens found after the `prefix`.
-// returns an error if the number of tokens are less or more than expected
-func parseParams(req *http.Request, prefix string, num int) ([]string, error) {
-	url := strings.TrimPrefix(req.URL.Path, prefix)
-	params := strings.Split(url, "/")
-	if len(params) != num || len(params[0]) == 0 || len(params[1]) == 0 {
-		return nil, fmt.Errorf("Bad format. Expecting exactly %d params", num)
-	}
-	return params, nil
+const (
+	dbhost = "DBHOST"
+	dbport = "DBPORT"
+	dbuser = "DBUSER"
+	dbpass = "DBPASS"
+	dbname = "DBNAME"
+)
+
+var db *sql.DB
+
+// Close closes the db connection (called via defer)
+func Close() {
+	db.Close()
 }
 
-// queryRepo first fetches the repository, and if nothing is wrong
-// it returns the result of fetchData()
-func queryRepo(repo *repository) (*repoData, error) {
-	data := repoData{}
-	err := fetchRepo(repo, &data)
-	if err != nil {
-		return nil, err
+func dbConfig() map[string]string {
+	conf := make(map[string]string)
+	host, ok := os.LookupEnv(dbhost)
+	if !ok {
+		panic("DBHOST environment variable required but not set")
 	}
-	return fetchData(repo, &data)
+	port, ok := os.LookupEnv(dbport)
+	if !ok {
+		panic("DBPORT environment variable required but not set")
+	}
+	user, ok := os.LookupEnv(dbuser)
+	if !ok {
+		panic("DBUSER environment variable required but not set")
+	}
+	password, ok := os.LookupEnv(dbpass)
+	if !ok {
+		panic("DBPASS environment variable required but not set")
+	}
+	name, ok := os.LookupEnv(dbname)
+	if !ok {
+		panic("DBNAME environment variable required but not set")
+	}
+	conf[dbhost] = host
+	conf[dbport] = port
+	conf[dbuser] = user
+	conf[dbpass] = password
+	conf[dbname] = name
+	return conf
 }
 
-// fetchData calls utility functions to collect data from
-// the database, builds and returns the `RepoData` value
-func fetchData(repo *repository, data *repoData) (*repoData, error) {
-	err := fetchMonthlyData(repo, data)
+// InitDb ...
+func InitDb() {
+	config := dbConfig()
+	var err error
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password='%s' dbname=%s sslmode=disable",
+		config[dbhost], config[dbport],
+		config[dbuser], config[dbpass], config[dbname])
+
+	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	err = fetchWeeklyData(repo, data)
+	err = db.Ping()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	err = fetchYearlyData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	err = fetchTimelineData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	err = fetchOwnerData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	fmt.Println("Successfully connected!")
 }
 
-// fetchRepo given a Repository value with name and owner of the repo
+// QueryRepos first fetches the repositories data from the db
+func QueryRepos(repos *common.Repositories) error {
+	rows, err := db.Query(`
+		SELECT
+			id,
+			repository_owner,
+			repository_name,
+			total_stars
+		FROM repositories
+		ORDER BY total_stars DESC`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		repo := common.RepositorySummary{}
+		err = rows.Scan(
+			&repo.ID,
+			&repo.OwnerName,
+			&repo.Name,
+			&repo.TotalStars,
+		)
+		if err != nil {
+			return err
+		}
+		repos.Repositories = append(repos.Repositories, repo)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// AddNewRepo adds a repository to the db
+func AddNewRepo(repo *github.Repository) error {
+	panic("Added")
+	// sqlStatement := `
+	// 	INSERT INTO repositories (age, email, first_name, last_name)
+	// 	VALUES ($1, $2, $3, $4)`
+	// _, err := db.Exec(sqlStatement, 30, "jon@calhoun.io", "Jonathan", "Calhoun")
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+// FetchRepo given a Repository value with name and owner of the repo
 // fetches more details from the database and fills the value with more
 // data
-func fetchRepo(repo *repository, data *repoData) error {
+func FetchRepo(repo *common.Repository, data *common.RepoData) error {
 	if len(repo.Name) == 0 {
 		return fmt.Errorf("Repository name not correctly set")
 	}
@@ -102,16 +170,16 @@ func fetchRepo(repo *repository, data *repoData) error {
 		switch err {
 		case sql.ErrNoRows:
 			//locally handle SQL error, abstract for caller
-			return errRepoNotFound("Repository not found")
+			return common.ErrRepoNotFound("Repository not found")
 		default:
 			return err
 		}
 	}
 	if !repo.Initialized {
-		return errRepoNotInitialized("Repository not initialized")
+		return common.ErrRepoNotInitialized("Repository not initialized")
 	}
 	if repo.RepoAge < 3 {
-		return errRepoNotInitialized("Repository not initialized")
+		return common.ErrRepoNotInitialized("Repository not initialized")
 	}
 
 	// assign to data
@@ -120,9 +188,9 @@ func fetchRepo(repo *repository, data *repoData) error {
 	return nil
 }
 
-// fetchOwnerData given a Repository object with the `Owner` value
+// FetchOwnerData given a Repository object with the `Owner` value
 // it fetches information about it from the database
-func fetchOwnerData(repo *repository, data *repoData) error {
+func FetchOwnerData(repo *common.Repository, data *common.RepoData) error {
 	if len(repo.OwnerName) == 0 {
 		return fmt.Errorf("Repository owner not correctly set")
 	}
@@ -156,13 +224,13 @@ func fetchOwnerData(repo *repository, data *repoData) error {
 	return nil
 }
 
-// fetchMonthlyData given a repository ID, it fetches the monthly
+// FetchMonthlyData given a repository ID, it fetches the monthly
 // data information
-func fetchMonthlyData(repo *repository, data *repoData) error {
+func FetchMonthlyData(repo *common.Repository, data *common.RepoData) error {
 	if repo.ID == 0 {
 		return fmt.Errorf("Repository ID not correctly set")
 	}
-	data.MonthlyData = monthlyData{}
+	data.MonthlyData = common.MonthlyData{}
 	sqlStatement := `
         SELECT
             commits_per_month,
@@ -181,9 +249,9 @@ func fetchMonthlyData(repo *repository, data *repoData) error {
 	return nil
 }
 
-// fetchWeeklyData given a repository ID, it fetches the weekly
+// FtchWeeklyData given a repository ID, it fetches the weekly
 // data information
-func fetchWeeklyData(repo *repository, data *repoData) error {
+func FetchWeeklyData(repo *common.Repository, data *common.RepoData) error {
 	if repo.ID == 0 {
 		return fmt.Errorf("Repository ID not correctly set")
 	}
@@ -211,7 +279,7 @@ func fetchWeeklyData(repo *repository, data *repoData) error {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		week := week{}
+		week := common.Week{}
 		err = rows.Scan(
 			&week.ID,
 			&week.RepositoryID,
@@ -231,62 +299,6 @@ func fetchWeeklyData(repo *repository, data *repoData) error {
 			return err
 		}
 		data.WeeklyData = append(data.WeeklyData, week)
-	}
-	err = rows.Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// fetchYearlyData returns the list of years for which we have weekly data
-// available
-func fetchYearlyData(repo *repository, data *repoData) error {
-	if data.WeeklyData == nil {
-		return fmt.Errorf("Repository weekly data not correctly set")
-	}
-	data.Years = make(map[int]bool)
-	for i := 0; i < len(data.WeeklyData); i++ {
-		year := data.WeeklyData[i].Year
-		data.Years[year] = true
-	}
-	return nil
-}
-
-// fetchTimelineData returns all the timeline data we have in the db about
-// the repo
-func fetchTimelineData(repo *repository, data *repoData) error {
-	if repo.ID == 0 {
-		return fmt.Errorf("Repository ID not correctly set")
-	}
-	rows, err := db.Query(`
-        SELECT
-            id,
-            repository_id,
-            title,
-            description,
-            emoji,
-            date
-        FROM repositories_timelines
-        WHERE repository_id=$1
-        ORDER BY date ASC`, repo.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		timeline := timeline{}
-		err = rows.Scan(
-			&timeline.ID,
-			&timeline.RepositoryID,
-			&timeline.Title,
-			&timeline.Description,
-			&timeline.Emoji,
-			&timeline.Date)
-		if err != nil {
-			return err
-		}
-		data.Timeline = append(data.Timeline, timeline)
 	}
 	err = rows.Err()
 	if err != nil {

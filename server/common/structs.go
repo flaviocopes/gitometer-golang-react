@@ -1,8 +1,8 @@
-package main
+package common
 
-// week represents the summary of a week of activity
+// Week represents the summary of a week of activity
 // on a repository
-type week struct {
+type Week struct {
 	ID           int
 	RepositoryID int
 	WeekNumber   int
@@ -19,19 +19,8 @@ type week struct {
 	PrClosed     int
 }
 
-// timeline represents important events happened on a
-// repository, which will be displayed on the repo timeline
-type timeline struct {
-	ID           int
-	RepositoryID int
-	Title        string
-	Description  string
-	Emoji        string
-	Date         string
-}
-
-// repository contains the details of a repository
-type repository struct {
+// Repository contains the details of a repository
+type Repository struct {
 	ID                       int    `json:"id"`
 	Name                     string `json:"name"`
 	OwnerName                string
@@ -63,46 +52,31 @@ type owner struct {
 	RepositorySelection string
 }
 
-// repoData contains the aggregate repository data returned
+// RepoData contains the aggregate repository data returned
 // by the API call
-type repoData struct {
-	MonthlyData monthlyData  `json:"monthly_data"`
-	WeeklyData  []week       `json:"weekly_data"`
+type RepoData struct {
+	MonthlyData MonthlyData  `json:"monthly_data"`
+	WeeklyData  []Week       `json:"weekly_data"`
 	Years       map[int]bool `json:"years"`
-	Timeline    []timeline   `json:"timeline"`
-	Repository  repository   `json:"repository"`
+	Repository  Repository   `json:"repository"`
 	Owner       owner        `json:"owner"`
 }
 
-// monthlyData contains the monthly activity of a repo
-type monthlyData struct {
+// MonthlyData contains the monthly activity of a repo
+type MonthlyData struct {
 	CommitsPerMonth string `json:"commits_per_month"`
 	StarsPerMonth   string `json:"stars_per_month"`
 }
 
-// Error handling types
-
-type errRepoNotInitialized string
-
-func (e errRepoNotInitialized) Error() string {
-	return string(e)
-}
-
-type errRepoNotFound string
-
-func (e errRepoNotFound) Error() string {
-	return string(e)
-}
-
-// repositorySummary contains the details of a repository
-type repositorySummary struct {
+// RepositorySummary contains the details of a repository
+type RepositorySummary struct {
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
 	OwnerName  string `json:"ownerName"`
 	TotalStars int    `json:"totalStars"`
 }
 
-// repositories contains a slice of repositories
-type repositories struct {
-	Repositories []repositorySummary `json:"repositories"`
+// Repositories contains a slice of repositories
+type Repositories struct {
+	Repositories []RepositorySummary `json:"repositories"`
 }
