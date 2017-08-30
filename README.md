@@ -5,8 +5,8 @@
 Shows data from GitHub repositories, stored locally in a Postgresql database
 
 ![](1.png)
-![](2.png)
 ![](3.png)
+![](2.png)
 
 ## How to run
 
@@ -29,7 +29,7 @@ Run
 `go get golang.org/x/oauth2`
 `go get github.com/lib/pq`
 
-Then from `client/` run `yarn start` (it's a `create-react-app` app)
+Then from `client/` run `yarn` and then `yarn start` (it's a `create-react-app` app)
 
 From `server/` run [`watcher`](https://flaviocopes.com/golang-watch-changes-recompile/) or run the Go backend in any other way you prefer.
 
