@@ -23,11 +23,11 @@ Then needs the following environment vars set:
 
 Run
 
-`go get github.com/flaviocopes/gitometer...`
-`go get github.com/google/go-github/github`
-`go get github.com/jinzhu/now`
-`go get golang.org/x/oauth2`
-`go get github.com/lib/pq`
+- `go get github.com/flaviocopes/gitometer...`
+- `go get github.com/google/go-github/github`
+- `go get github.com/jinzhu/now`
+- `go get golang.org/x/oauth2`
+- `go get github.com/lib/pq`
 
 Then from `client/` run `yarn` and then `yarn start` (it's a `create-react-app` app)
 
