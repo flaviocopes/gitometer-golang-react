@@ -7,7 +7,8 @@ import ValueAndPercentage from './ValueAndPercentage'
 const StarsOverTime = props =>
   (<div className="up-contents">
     <div className="os-tabs-w">
-      <h5 className="element-header center">Stars over time{' '}
+      <h5 className="element-header center">
+        Stars over time{' '}
         <img
           alt="&#x1f31f;"
           className="emojione"
@@ -51,9 +52,15 @@ StarsOverTime.propTypes = {
   count_last_12_months: PropTypes.number.isRequired,
   count_last_4_weeks: PropTypes.number.isRequired,
   count_last_week: PropTypes.number.isRequired,
-  graph_label: PropTypes.string.isRequired,
-  graph_labels: PropTypes.arrayOf(PropTypes.string).isRequired,
-  graph_data: PropTypes.arrayOf(PropTypes.number).isRequired,
+  graph_label: PropTypes.string,
+  graph_labels: PropTypes.arrayOf(PropTypes.string),
+  graph_data: PropTypes.arrayOf(PropTypes.number),
+}
+
+StarsOverTime.defaultProps = {
+  graph_label: null,
+  graph_labels: null,
+  graph_data: null,
 }
 
 export default StarsOverTime

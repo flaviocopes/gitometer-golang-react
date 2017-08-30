@@ -9,18 +9,33 @@ import (
 
 	"github.com/flaviocopes/gitometer/server/common"
 	"github.com/flaviocopes/gitometer/server/db"
+	"github.com/flaviocopes/gitometer/server/github"
 )
+
+func corsHandler(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			//handle preflight in here
+		} else {
+			h.ServeHTTP(w, r)
+		}
+	}
+}
 
 func main() {
 	db.InitDb()
 	defer db.Close()
+
 	http.HandleFunc("/api/index", indexHandler)
-	http.HandleFunc("/api/repo/", repoHandler)
+	http.HandleFunc("/api/repo/", getRepoHandler)
+	http.HandleFunc("/api/repo", addRepoHandler)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
-func setupResponse(w *http.ResponseWriter) {
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
 // parseParams accepts a req and returns the `num` path tokens found after the `prefix`.
@@ -36,6 +51,11 @@ func parseParams(req *http.Request, prefix string, num int) ([]string, error) {
 
 // indexHandler calls `queryRepos()` and marshals the result as JSON
 func indexHandler(w http.ResponseWriter, req *http.Request) {
+	setupResponse(&w, req)
+	if (*req).Method == "OPTIONS" {
+		return
+	}
+
 	repos := common.Repositories{}
 
 	err := db.QueryRepos(&repos)
@@ -50,7 +70,6 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	setupResponse(&w)
 	fmt.Fprintf(w, string(out))
 }
 
@@ -62,61 +81,55 @@ func queryRepo(repo *common.Repository) (*common.RepoData, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fetchData(repo, &data)
+	return &data, nil
 }
 
-// fetchYearlyData returns the list of years for which we have weekly data
-// available
-func fetchYearlyData(repo *common.Repository, data *common.RepoData) error {
-	if data.WeeklyData == nil {
-		return fmt.Errorf("Repository weekly data not correctly set")
-	}
-	data.Years = make(map[int]bool)
-	for i := 0; i < len(data.WeeklyData); i++ {
-		year := data.WeeklyData[i].Year
-		data.Years[year] = true
-	}
-	return nil
-}
-
-// fetchData calls utility functions to collect data from
-// the database, builds and returns the `RepoData` value
-func fetchData(repo *common.Repository, data *common.RepoData) (*common.RepoData, error) {
-	err := db.FetchMonthlyData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	err = db.FetchWeeklyData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	err = fetchYearlyData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	err = db.FetchOwnerData(repo, data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-// repoHandler processes the response by parsing the params, then calling
+// getRepoHandler processes the response by parsing the params, then calling
 // `query()`, and marshaling the result in JSON format, sending it to
 // `http.ResponseWriter`.
-func repoHandler(w http.ResponseWriter, req *http.Request) {
+func getRepoHandler(w http.ResponseWriter, req *http.Request) {
+	setupResponse(&w, req)
+	if (*req).Method == "OPTIONS" {
+		return
+	}
 	switch req.Method {
 	case "GET":
 		handleGetRepo(w, req)
-	case "POST":
-		handleAddNewRepo(w, req)
 	}
 }
 
-func handleAddNewRepo(w http.ResponseWriter, req *http.Request) {
-	setupResponse(&w)
+func addRepoHandler(w http.ResponseWriter, req *http.Request) {
+	setupResponse(&w, req)
+	if (*req).Method == "OPTIONS" {
+		return
+	}
+	handleAddNewRepo(w, req)
+}
 
-	fmt.Fprintf(w, "ADD")
+type newRepoData struct {
+	Owner string
+	Name  string
+}
+
+func handleAddNewRepo(w http.ResponseWriter, req *http.Request) {
+	decoder := json.NewDecoder(req.Body)
+
+	var data newRepoData
+	err := decoder.Decode(&data)
+	if err != nil {
+		panic(err)
+	}
+
+	owner := data.Owner
+	name := data.Name
+
+	if owner == "" || name == "" {
+		http.Error(w, "Missing parameter name or owner", 500)
+	}
+
+	github.AddRepoToDb(owner, name)
+
+	fmt.Fprintf(w, string("ok"))
 }
 
 func handleGetRepo(w http.ResponseWriter, req *http.Request) {
@@ -148,6 +161,5 @@ func handleGetRepo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	setupResponse(&w)
 	fmt.Fprintf(w, string(out))
 }

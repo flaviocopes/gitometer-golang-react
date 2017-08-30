@@ -4,6 +4,10 @@ import PropTypes from 'prop-types'
 import { Line } from 'react-chartjs-2'
 
 const Graph = (props) => {
+  if (!props.labels) {
+    return null
+  }
+
   const data = {
     labels: props.labels,
     datasets: [
@@ -35,9 +39,15 @@ const Graph = (props) => {
 }
 
 Graph.propTypes = {
-  label: PropTypes.string.isRequired,
-  labels: PropTypes.arrayOf(PropTypes.string).isRequired,
-  data: PropTypes.arrayOf(PropTypes.number).isRequired,
+  label: PropTypes.string,
+  labels: PropTypes.arrayOf(PropTypes.string),
+  data: PropTypes.arrayOf(PropTypes.number),
+}
+
+Graph.defaultProps = {
+  label: null,
+  labels: null,
+  data: null,
 }
 
 export default Graph

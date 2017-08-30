@@ -32,18 +32,23 @@ class SingleRepository extends Component {
     }
 
     const url = 'https://github.com/{data.repository.owner}/{data.repository.name}'
-    const commitsPerMonth = JSON.parse(data.monthly_data.commits_per_month)
-    const starsPerMonth = JSON.parse(data.monthly_data.commits_per_month)
+    let starsPerMonth = {
+      labels: null,
+      data_summed: null,
+    }
+    if (data.repository.stars_per_month) {
+      starsPerMonth = JSON.parse(data.repository.stars_per_month)
+    }
 
     return (
       <div>
         <div className="element-wrapper wrapper-dashboard">
           <div className="user-profile">
-            <Link to="/">Home</Link>
+            <br />
+            <Link to="/" style={{ textAlign: 'center', display: 'block' }}>Home</Link>
             <Heading
               name={data.repository.name}
               description={data.repository.description}
-              avatar={data.owner.avatar}
               url={url}
             />
             <SummaryNumbers
@@ -56,9 +61,6 @@ class SingleRepository extends Component {
               count_last_12_months={data.repository.commits_count_last_12_months}
               count_last_4_weeks={data.repository.commits_count_last_4_weeks}
               count_last_week={data.repository.commits_count_last_week}
-              graph_label={'Commits up to now'}
-              graph_labels={commitsPerMonth.labels}
-              graph_data={commitsPerMonth.data_summed}
             />
             <StarsOverTime
               total={data.repository.total_stars}
@@ -67,7 +69,7 @@ class SingleRepository extends Component {
               count_last_week={data.repository.stars_count_last_week}
               graph_label={'Stars up to now'}
               graph_labels={starsPerMonth.labels}
-              graph_data={starsPerMonth.data_summed}
+              graph_data={starsPerMonth.data}
             />
           </div>
         </div>
@@ -90,7 +92,6 @@ SingleRepository.propTypes = {
       commits_count_last_12_months: PropTypes.number,
       commits_count_last_4_weeks: PropTypes.number,
       commits_count_last_week: PropTypes.number,
-      commits_per_month: PropTypes.string,
       stars_count_last_12_months: PropTypes.number,
       stars_count_last_4_weeks: PropTypes.number,
       stars_count_last_week: PropTypes.number,

@@ -46,7 +46,7 @@ const ValueAndPercentage = (props) => {
         </div>
         <div className="trending trending-up">
           <span>
-            {percentage}
+            {percentage}%
           </span>
           <i className="os-icon" />
         </div>

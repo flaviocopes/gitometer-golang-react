@@ -35,7 +35,7 @@ class Main extends Component {
   }
 
   addNewRepository = (owner, name) => {
-    axios.post(`http://localhost:8000/api/repo/${owner}/${name}`).then((resp) => {
+    axios.post('http://localhost:8000/api/repo', { owner, name }).then((resp) => {
       console.log(resp)
     })
   }

@@ -1,7 +1,6 @@
 // eslint-disable-next-line
 import React from 'react'
 import PropTypes from 'prop-types'
-import Graph from './Graph'
 import ValueAndPercentage from './ValueAndPercentage'
 
 const CommitsOverTime = props =>
@@ -30,9 +29,6 @@ const CommitsOverTime = props =>
               />
             </div>
           </div>
-          <div className="el-chart-w">
-            <Graph labels={props.graph_labels} data={props.graph_data} label={props.graph_label} />
-          </div>
         </div>
         <div className="tab-pane" id="tab_conversion" />
       </div>
@@ -44,9 +40,6 @@ CommitsOverTime.propTypes = {
   count_last_12_months: PropTypes.number.isRequired,
   count_last_4_weeks: PropTypes.number.isRequired,
   count_last_week: PropTypes.number.isRequired,
-  graph_label: PropTypes.string.isRequired,
-  graph_labels: PropTypes.arrayOf(PropTypes.string).isRequired,
-  graph_data: PropTypes.arrayOf(PropTypes.number).isRequired,
 }
 
 export default CommitsOverTime
